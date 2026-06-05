@@ -1,98 +1,128 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
+import { FlatList, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { BottomTabInset, Spacing } from '@/constants/theme';
+
+type MenuItem = {
+  id: string;
+  name: string;
+  category: string;
+  price: string;
+};
+
+const menuItems: MenuItem[] = [
+  // Hot Drinks
+  { id: '1', name: 'Americano', category: 'Hot Drinks', price: '₱120' },
+  { id: '2', name: 'Latte', category: 'Hot Drinks', price: '₱150' },
+  { id: '3', name: 'Cappuccino', category: 'Hot Drinks', price: '₱145' },
+  // Cold Drinks
+  { id: '4', name: 'Iced Matcha Latte', category: 'Cold Drinks', price: '₱165' },
+  { id: '5', name: 'Cold Brew', category: 'Cold Drinks', price: '₱155' },
+  { id: '6', name: 'Strawberry Frappé', category: 'Cold Drinks', price: '₱170' },
+  // Desserts
+  { id: '7', name: 'Cheesecake', category: 'Desserts', price: '₱180' },
+  { id: '8', name: 'Brownie', category: 'Desserts', price: '₱130' },
+  { id: '9', name: 'Tiramisu', category: 'Desserts', price: '₱200' },
+  // Snacks (new category)
+  { id: '10', name: 'Croissant', category: 'Snacks', price: '₱95' },
+  { id: '11', name: 'Club Sandwich', category: 'Snacks', price: '₱160' },
+  { id: '12', name: 'Cheese Toast', category: 'Snacks', price: '₱110' },
+];
 
 export default function HomeScreen() {
-  return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
+  const renderItem = ({ item }: { item: MenuItem }) => (
+    <ThemedView style={styles.card}>
+      <ThemedText type="small" style={styles.category}>
+        {item.category}
+      </ThemedText>
+      <ThemedView style={styles.row}>
+        <ThemedText type="defaultSemiBold" style={styles.name}>
+          {item.name}
+        </ThemedText>
+        <ThemedText type="defaultSemiBold" style={styles.price}>
+          {item.price}
         </ThemedText>
       </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => Alert.alert(item.name, `Price: ${item.price}`)}
+      >
+        <ThemedText type="small" style={styles.buttonText}>
+          View Item
+        </ThemedText>
+      </TouchableOpacity>
+    </ThemedView>
+  );
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
+  return (
+    <ThemedView style={styles.container}>
+      <SafeAreaView style={styles.safeArea}>
+        <ThemedText type="title" style={styles.title}>
+          Kanto Corner Menu
         </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        <FlatList
+          data={menuItems}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={styles.list}
+          showsVerticalScrollIndicator={false}
+        />
+      </SafeAreaView>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+  },
+  safeArea: {
+    flex: 1,
+    paddingHorizontal: Spacing.four,
+    paddingBottom: BottomTabInset + Spacing.three,
+  },
+  title: {
+    marginTop: Spacing.three,
+    marginBottom: Spacing.three,
+  },
+  list: {
+    gap: Spacing.two,
+    paddingBottom: Spacing.four,
+  },
+  card: {
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.three,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: '#444',
+    gap: Spacing.two,
+  },
+  row: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  category: {
+    opacity: 0.5,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  name: {
+    fontSize: 18,
+  },
+  price: {
+    fontSize: 16,
+    opacity: 0.8,
+  },
+  button: {
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#888',
+    borderRadius: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  buttonText: {
+    opacity: 0.9,
   },
 });

@@ -27,6 +27,15 @@ export const Colors = {
   },
 };
 
+export const Spacing = {
+  one: 4,
+  two: 8,
+  three: 12,
+  four: 16,
+};
+
+export const BottomTabInset = 0;
+
 export const Fonts = Platform.select({
   ios: {
     /** iOS `UIFontDescriptorSystemDesignDefault` */
