@@ -1,7 +1,8 @@
-import { FlatList, StyleSheet, TouchableOpacity, View, Text, Alert } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import * as SecureStore from 'expo-secure-store';
 import { useRouter } from 'expo-router';
-import { useContext } from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { CartContext } from './_layout';
 
 type MenuItem = {
@@ -10,32 +11,100 @@ type MenuItem = {
   category: string;
   price: string;
   description: string;
+  image?: string;
+  ingredients?: string[];
 };
 
-const menuItems: MenuItem[] = [
-  { id: '1', name: 'Americano', category: 'Hot Drinks', price: '₱120', description: 'Bold and strong black coffee brewed with espresso shots.' },
-  { id: '2', name: 'Latte', category: 'Hot Drinks', price: '₱150', description: 'Smooth espresso with steamed milk and a light foam top.' },
-  { id: '3', name: 'Cappuccino', category: 'Hot Drinks', price: '₱145', description: 'Equal parts espresso, steamed milk, and thick foam.' },
-  { id: '4', name: 'Iced Matcha Latte', category: 'Cold Drinks', price: '₱165', description: 'Ceremonial grade matcha blended with cold milk over ice.' },
-  { id: '5', name: 'Cold Brew', category: 'Cold Drinks', price: '₱155', description: 'Slow-steeped coffee served chilled, naturally sweet and bold.' },
-  { id: '6', name: 'Strawberry Frappé', category: 'Cold Drinks', price: '₱170', description: 'Blended strawberry slush with cream and a fruity finish.' },
-  { id: '7', name: 'Cheesecake', category: 'Desserts', price: '₱180', description: 'Creamy New York-style cheesecake with a buttery graham crust.' },
-  { id: '8', name: 'Brownie', category: 'Desserts', price: '₱130', description: 'Dense, fudgy chocolate brownie baked fresh daily.' },
-  { id: '9', name: 'Tiramisu', category: 'Desserts', price: '₱200', description: 'Classic Italian dessert with espresso-soaked ladyfingers and mascarpone.' },
-  { id: '10', name: 'Croissant', category: 'Snacks', price: '₱95', description: 'Buttery, flaky French pastry baked to golden perfection.' },
-  { id: '11', name: 'Club Sandwich', category: 'Snacks', price: '₱160', description: 'Triple-decker sandwich with chicken, bacon, egg, and veggies.' },
-  { id: '12', name: 'Cheese Toast', category: 'Snacks', price: '₱110', description: 'Thick-cut toast loaded with melted cheese, served warm.' },
+const MENU_CACHE_KEY = 'kantocorner_menu';
+const API_URLS = [
+  'https://api.sampleapis.com/coffee/hot',
+  'https://api.sampleapis.com/coffee/iced',
 ];
 
-export { menuItems };
+const getPrice = (id: string | number, category: string) => {
+  const numericId = Number(id) || 1;
+  const base = 80 + numericId * 12;
+  return category === 'Hot Drinks' ? `₱${base}` : `₱${base + 15}`;
+};
+
+const normalizeMenuItem = (item: any, category: string): MenuItem => {
+  const rawId = String(item.id ?? '0');
+  const uniqueId = `${category === 'Hot Drinks' ? 'hot' : 'iced'}-${rawId}`;
+
+  return {
+    id: uniqueId,
+    name: item.title ?? item.name ?? 'Coffee Item',
+    category,
+    price: getPrice(rawId, category),
+    description: item.description ?? 'Freshly brewed and ready to enjoy.',
+    image: item.image,
+    ingredients: Array.isArray(item.ingredients) ? item.ingredients : [],
+  };
+};
+
+export { MENU_CACHE_KEY };
 export type { MenuItem };
 
 export default function MenuScreen() {
   const router = useRouter();
   const { addToCart } = useContext(CartContext);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+
+    const loadMenu = async () => {
+      try {
+        const cached = await SecureStore.getItemAsync(MENU_CACHE_KEY);
+        if (cached && mounted) {
+          const parsed = JSON.parse(cached) as MenuItem[];
+          setMenuItems(parsed);
+        }
+
+        const responses = await Promise.all(
+          API_URLS.map(async (url) => {
+            const response = await fetch(url);
+            if (!response.ok) {
+              throw new Error(`Failed to fetch ${url}`);
+            }
+            return response.json();
+          })
+        );
+
+        const liveItems = responses.flatMap((data, index) =>
+          data.map((item: any) =>
+            normalizeMenuItem(item, index === 0 ? 'Hot Drinks' : 'Cold Drinks')
+          )
+        );
+
+        if (mounted) {
+          setMenuItems(liveItems);
+          await SecureStore.setItemAsync(MENU_CACHE_KEY, JSON.stringify(liveItems));
+          setErrorMessage(null);
+        }
+      } catch {
+        if (mounted) {
+          setErrorMessage('Unable to load menu right now. Showing cached items if available.');
+        }
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadMenu();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const renderItem = ({ item }: { item: MenuItem }) => (
     <View style={styles.card}>
+      {item.image ? <Image source={{ uri: item.image }} style={styles.image} /> : null}
       <Text style={styles.category}>{item.category}</Text>
       <Text style={styles.name}>{item.name}</Text>
       <Text style={styles.price}>{item.price}</Text>
@@ -51,6 +120,8 @@ export default function MenuScreen() {
                 category: item.category,
                 price: item.price,
                 description: item.description,
+                image: item.image ?? '',
+                ingredients: item.ingredients?.join(',') ?? '',
               },
             })
           }
@@ -76,13 +147,27 @@ export default function MenuScreen() {
         <View style={styles.header}>
           <Text style={styles.headerTitle}>☕ Kanto Corner Menu</Text>
         </View>
-        <FlatList
-          data={menuItems}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.list}
-          showsVerticalScrollIndicator={false}
-        />
+        {isLoading ? (
+          <View style={styles.loadingState}>
+            <ActivityIndicator size="large" color="#3b1f0e" />
+            <Text style={styles.loadingText}>Loading menu...</Text>
+          </View>
+        ) : (
+          <>
+            {errorMessage ? (
+              <View style={styles.errorBanner}>
+                <Text style={styles.errorText}>{errorMessage}</Text>
+              </View>
+            ) : null}
+            <FlatList
+              data={menuItems}
+              keyExtractor={(item) => `${item.category}-${item.id}`}
+              renderItem={renderItem}
+              contentContainerStyle={styles.list}
+              showsVerticalScrollIndicator={false}
+            />
+          </>
+        )}
       </SafeAreaView>
     </View>
   );
@@ -98,6 +183,20 @@ const styles = StyleSheet.create({
   },
   headerTitle: { color: '#fff', fontSize: 20, fontWeight: 'bold' },
   list: { paddingBottom: 24 },
+  loadingState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: { marginTop: 12, color: '#5d4b3d' },
+  errorBanner: {
+    backgroundColor: '#fff4f4',
+    marginHorizontal: 12,
+    marginTop: 10,
+    padding: 10,
+    borderRadius: 6,
+  },
+  errorText: { color: '#9b3b3b', fontSize: 12 },
   card: {
     backgroundColor: '#fdf6ee',
     marginHorizontal: 12,
@@ -106,6 +205,12 @@ const styles = StyleSheet.create({
     padding: 14,
     borderLeftWidth: 3,
     borderLeftColor: '#c8a47e',
+  },
+  image: {
+    width: '100%',
+    height: 160,
+    borderRadius: 6,
+    marginBottom: 10,
   },
   category: {
     fontSize: 10,
