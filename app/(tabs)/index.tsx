@@ -47,7 +47,7 @@ export type { MenuItem };
 
 export default function MenuScreen() {
   const router = useRouter();
-  const { addToCart } = useContext(CartContext);
+  const { addToCart, favorites, toggleFavorite } = useContext(CartContext);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -102,44 +102,57 @@ export default function MenuScreen() {
     };
   }, []);
 
-  const renderItem = ({ item }: { item: MenuItem }) => (
-    <View style={styles.card}>
-      {item.image ? <Image source={{ uri: item.image }} style={styles.image} /> : null}
-      <Text style={styles.category}>{item.category}</Text>
-      <Text style={styles.name}>{item.name}</Text>
-      <Text style={styles.price}>{item.price}</Text>
-      <View style={styles.row}>
+  const renderItem = ({ item }: { item: MenuItem }) => {
+    const isFavorite = favorites.includes(item.id);
+
+    return (
+      <View style={styles.card}>
+        {item.image ? <Image source={{ uri: item.image }} style={styles.image} /> : null}
         <TouchableOpacity
-          style={styles.viewBtn}
-          onPress={() =>
-            router.navigate({
-              pathname: '/detail',
-              params: {
-                id: item.id,
-                name: item.name,
-                category: item.category,
-                price: item.price,
-                description: item.description,
-                image: item.image ?? '',
-                ingredients: item.ingredients?.join(',') ?? '',
-              },
-            })
-          }
+          style={styles.favoriteBadge}
+          onPress={() => toggleFavorite(item.id)}
         >
-          <Text style={styles.viewBtnText}>View Item</Text>
+          <Text style={[styles.favoriteBadgeText, isFavorite && styles.favoriteBadgeTextActive]}>
+            {isFavorite ? '♥' : '♡'}
+          </Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.cartBtn}
-          onPress={() => {
-            addToCart(item);
-            Alert.alert('Added!', `${item.name} added to cart.`);
-          }}
-        >
-          <Text style={styles.cartBtnText}>+ Add to Cart</Text>
-        </TouchableOpacity>
+        <Text style={styles.category}>{item.category}</Text>
+        <Text style={styles.name}>{item.name}</Text>
+        <Text style={styles.price}>{item.price}</Text>
+        <View style={styles.row}>
+          <TouchableOpacity
+            style={styles.viewBtn}
+            onPress={() =>
+              router.navigate({
+                pathname: '/detail',
+                params: {
+                  id: item.id,
+                  name: item.name,
+                  category: item.category,
+                  price: item.price,
+                  description: item.description,
+                  image: item.image ?? '',
+                  ingredients: item.ingredients?.join(',') ?? '',
+                  isFavorite: isFavorite ? 'true' : 'false',
+                },
+              })
+            }
+          >
+            <Text style={styles.viewBtnText}>View Item</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.cartBtn}
+            onPress={() => {
+              addToCart(item);
+              Alert.alert('Added!', `${item.name} added to cart.`);
+            }}
+          >
+            <Text style={styles.cartBtnText}>+ Add to Cart</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -174,10 +187,10 @@ export default function MenuScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5ede3' },
+  container: { flex: 1, backgroundColor: '#fff5f7' },
   safeArea: { flex: 1 },
   header: {
-    backgroundColor: '#3b1f0e',
+    backgroundColor: '#f45b90',
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
@@ -188,23 +201,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  loadingText: { marginTop: 12, color: '#5d4b3d' },
+  loadingText: { marginTop: 12, color: '#8f4a5f' },
   errorBanner: {
-    backgroundColor: '#fff4f4',
+    backgroundColor: '#fff0f5',
     marginHorizontal: 12,
     marginTop: 10,
     padding: 10,
     borderRadius: 6,
   },
-  errorText: { color: '#9b3b3b', fontSize: 12 },
+  errorText: { color: '#b24a72', fontSize: 12 },
   card: {
-    backgroundColor: '#fdf6ee',
+    backgroundColor: '#fff7fb',
     marginHorizontal: 12,
     marginTop: 10,
     borderRadius: 8,
     padding: 14,
     borderLeftWidth: 3,
-    borderLeftColor: '#c8a47e',
+    borderLeftColor: '#f7b3cc',
+    position: 'relative',
   },
   image: {
     width: '100%',
@@ -212,26 +226,45 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginBottom: 10,
   },
+  favoriteBadge: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 1,
+    backgroundColor: 'transparent',
+  },
+  favoriteBadgeText: {
+    color: '#f7b3cc',
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  favoriteBadgeTextActive: {
+    color: '#f45b90',
+  },
   category: {
     fontSize: 10,
-    color: '#999',
+    color: '#f48ab1',
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: 2,
   },
   name: { fontSize: 17, fontWeight: '600', color: '#2c1a0e', marginBottom: 2 },
-  price: { fontSize: 14, color: '#8b3a1a', marginBottom: 10 },
+  price: { fontSize: 14, color: '#d44c82', marginBottom: 10 },
   row: { flexDirection: 'row', gap: 8 },
   viewBtn: {
     borderWidth: 1,
-    borderColor: '#3b1f0e',
+    borderColor: '#f45b90',
     borderRadius: 6,
     paddingHorizontal: 14,
     paddingVertical: 6,
   },
-  viewBtnText: { color: '#3b1f0e', fontSize: 13 },
+  viewBtnText: { color: '#f45b90', fontSize: 13 },
   cartBtn: {
-    backgroundColor: '#3b1f0e',
+    backgroundColor: '#f45b90',
     borderRadius: 6,
     paddingHorizontal: 14,
     paddingVertical: 6,

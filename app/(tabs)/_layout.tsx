@@ -25,10 +25,13 @@ type CartContextType = {
   specialInstruction: string;
   setSpecialInstruction: (value: string) => void;
   saveSpecialInstruction: (value: string) => Promise<void>;
+  favorites: string[];
+  toggleFavorite: (id: string) => void;
 };
 
 const CART_STORAGE_KEY = 'kantocorner_cart';
 const SPECIAL_INSTRUCTION_STORAGE_KEY = 'kantocorner_special_instruction';
+const FAVORITES_STORAGE_KEY = 'kantocorner_favorites';
 
 export const CartContext = createContext<CartContextType>({
   cart: [],
@@ -40,11 +43,14 @@ export const CartContext = createContext<CartContextType>({
   specialInstruction: '',
   setSpecialInstruction: () => {},
   saveSpecialInstruction: async () => {},
+  favorites: [],
+  toggleFavorite: () => {},
 });
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [specialInstruction, setSpecialInstruction] = useState('');
+  const [favorites, setFavorites] = useState<string[]>([]);
 
   useEffect(() => {
     let mounted = true;
@@ -62,8 +68,13 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         if (savedInstruction !== null && mounted) {
           setSpecialInstruction(savedInstruction);
         }
+
+        const savedFavorites = await SecureStore.getItemAsync(FAVORITES_STORAGE_KEY);
+        if (savedFavorites && mounted) {
+          setFavorites(JSON.parse(savedFavorites) as string[]);
+        }
       } catch (error) {
-        console.warn('Failed to load cart or instruction from storage', error);
+        console.warn('Failed to load cart, instruction, or favorites from storage', error);
       }
     };
 
@@ -79,6 +90,14 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       console.warn('Failed to save cart', error);
     });
   }, [cart]);
+
+  useEffect(() => {
+    SecureStore.setItemAsync(FAVORITES_STORAGE_KEY, JSON.stringify(favorites)).catch(
+      (error) => {
+        console.warn('Failed to save favorites', error);
+      }
+    );
+  }, [favorites]);
 
   const addToCart = (item: MenuItem) => {
     setCart((prev) => {
@@ -118,6 +137,12 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     await SecureStore.setItemAsync(SPECIAL_INSTRUCTION_STORAGE_KEY, nextValue);
   };
 
+  const toggleFavorite = (id: string) => {
+    setFavorites((prev) =>
+      prev.includes(id) ? prev.filter((itemId) => itemId !== id) : [...prev, id]
+    );
+  };
+
   const cartCount = cart.reduce((sum, c) => sum + c.quantity, 0);
 
   return (
@@ -132,6 +157,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         specialInstruction,
         setSpecialInstruction,
         saveSpecialInstruction,
+        favorites,
+        toggleFavorite,
       }}
     >
       {children}
@@ -146,11 +173,11 @@ export default function RootLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#3b1f0e',
-        tabBarInactiveTintColor: '#9b8c7a',
+        tabBarActiveTintColor: '#f45b90',
+        tabBarInactiveTintColor: '#f7b3cc',
         tabBarStyle: {
-          backgroundColor: '#fffaf6',
-          borderTopColor: '#efe4d8',
+          backgroundColor: '#fff7fb',
+          borderTopColor: '#fbe3ec',
           height: 64,
           paddingBottom: 8,
           paddingTop: 8,

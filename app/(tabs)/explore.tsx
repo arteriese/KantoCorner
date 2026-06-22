@@ -77,10 +77,10 @@ export default function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5ede3' },
+  container: { flex: 1, backgroundColor: '#fff5f7' },
   safeArea: { flex: 1 },
   header: {
-    backgroundColor: '#3b1f0e',
+    backgroundColor: '#f45b90',
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
@@ -94,22 +94,22 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#f3e3ca',
+    backgroundColor: '#ffe7ef',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { color: '#3b1f0e', fontSize: 16, fontWeight: '700' },
+  avatarText: { color: '#f45b90', fontSize: 16, fontWeight: '700' },
   body: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 16 },
   card: {
     width: '100%',
-    backgroundColor: '#fffaf6',
+    backgroundColor: '#fff7fb',
     borderRadius: 8,
     padding: 16,
   },
-  label: { color: '#5d4b3d', fontSize: 13, fontWeight: '600', marginBottom: 6 },
+  label: { color: '#8d5d74', fontSize: 13, fontWeight: '600', marginBottom: 6 },
   input: {
     borderWidth: 1,
-    borderColor: '#e0cdb5',
+    borderColor: '#f7b3cc',
     borderRadius: 6,
     paddingHorizontal: 10,
     paddingVertical: 10,
@@ -117,12 +117,12 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     alignSelf: 'flex-start',
-    backgroundColor: '#3b1f0e',
+    backgroundColor: '#f45b90',
     borderRadius: 6,
     paddingHorizontal: 12,
     paddingVertical: 8,
     marginTop: 10,
   },
   saveButtonText: { color: '#fff', fontSize: 13, fontWeight: '600' },
-  savedText: { color: '#7a6a5b', fontSize: 13, marginTop: 10 },
+  savedText: { color: '#8d5d74', fontSize: 13, marginTop: 10 },
 });
