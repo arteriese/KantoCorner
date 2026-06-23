@@ -51,6 +51,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [specialInstruction, setSpecialInstruction] = useState('');
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -75,6 +76,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         }
       } catch (error) {
         console.warn('Failed to load cart, instruction, or favorites from storage', error);
+      } finally {
+        if (mounted) {
+          setIsHydrated(true);
+        }
       }
     };
 
@@ -86,18 +91,22 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    if (!isHydrated) return;
+
     SecureStore.setItemAsync(CART_STORAGE_KEY, JSON.stringify(cart)).catch((error) => {
       console.warn('Failed to save cart', error);
     });
-  }, [cart]);
+  }, [cart, isHydrated]);
 
   useEffect(() => {
+    if (!isHydrated) return;
+
     SecureStore.setItemAsync(FAVORITES_STORAGE_KEY, JSON.stringify(favorites)).catch(
       (error) => {
         console.warn('Failed to save favorites', error);
       }
     );
-  }, [favorites]);
+  }, [favorites, isHydrated]);
 
   const addToCart = (item: MenuItem) => {
     setCart((prev) => {

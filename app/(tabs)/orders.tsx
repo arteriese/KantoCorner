@@ -102,35 +102,43 @@ export default function OrdersScreen() {
               </Text>
             </View>
             {isFavoritesExpanded ? (
-              <ScrollView
-                style={styles.favoritesScroll}
-                contentContainerStyle={styles.favoritesScrollContent}
-                showsVerticalScrollIndicator={false}
-              >
-                {menuItems.map((item) => {
-                  const isFavorite = favorites.includes(item.id);
-                  return (
-                    <TouchableOpacity
-                      key={item.id}
-                      style={styles.favoriteItemRow}
-                      onPress={() => toggleFavorite(item.id)}
-                    >
-                      <View style={styles.favoriteItemLeft}>
-                        <View style={[styles.checkbox, isFavorite && styles.checkboxActive]}>
-                          {isFavorite ? <Text style={styles.checkboxText}>✓</Text> : null}
-                        </View>
-                        <View>
-                          <Text style={styles.favoriteItemName}>{item.name}</Text>
-                          <Text style={styles.favoriteItemMeta}>{item.price}</Text>
-                        </View>
-                      </View>
-                      <Text style={[styles.favoriteBadge, isFavorite && styles.favoriteBadgeActive]}>
-                        {isFavorite ? '♥' : '♡'}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
+              favorites.length === 0 ? (
+                <Text style={[styles.favoritesEmpty, { marginTop: 8 }]}>
+                  No favorites yet. Tap ♡ on any menu item to save it here.
+                </Text>
+              ) : (
+                <ScrollView
+                  style={styles.favoritesScroll}
+                  contentContainerStyle={styles.favoritesScrollContent}
+                  showsVerticalScrollIndicator={false}
+                >
+                  {menuItems
+                    .filter((item) => favorites.includes(item.id))
+                    .map((item) => {
+                      const isFavorite = favorites.includes(item.id);
+                      return (
+                        <TouchableOpacity
+                          key={item.id}
+                          style={styles.favoriteItemRow}
+                          onPress={() => toggleFavorite(item.id)}
+                        >
+                          <View style={styles.favoriteItemLeft}>
+                            <View style={[styles.checkbox, isFavorite && styles.checkboxActive]}>
+                              {isFavorite ? <Text style={styles.checkboxText}>✓</Text> : null}
+                            </View>
+                            <View>
+                              <Text style={styles.favoriteItemName}>{item.name}</Text>
+                              <Text style={styles.favoriteItemMeta}>{item.price}</Text>
+                            </View>
+                          </View>
+                          <Text style={[styles.favoriteBadge, isFavorite && styles.favoriteBadgeActive]}>
+                            {isFavorite ? '♥' : '♡'}
+                          </Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                </ScrollView>
+              )
             ) : null}
           </TouchableOpacity>
 
